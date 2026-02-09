@@ -371,3 +371,41 @@ document.addEventListener("click",function(e){
 
 // Close WS on page unload
 window.addEventListener("beforeunload",()=>{if(socket) socket.close();});
+async function editMachineName(e, location, machineId, oldName) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const newName = prompt("Enter new machine name:", oldName);
+    if (!newName || newName.trim() === oldName) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/machine/rename`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                location: location,
+                machine_id: machineId,
+                new_name: newName.trim()
+            })
+        });
+
+        const data = await res.json();
+        if (!data.ok) {
+            alert("❌ Rename failed");
+            return;
+        }
+
+        // 🔄 Update UI instantly (no reload)
+        const card = document.getElementById(`machine-${machineId}`);
+        if (card) {
+            const h3 = card.querySelector("h3");
+            h3.childNodes[0].nodeValue = newName + " ";
+        }
+
+        createAlert(`✅ Machine renamed to ${newName}`, 0);
+
+    } catch (err) {
+        console.error(err);
+        alert("❌ Rename error");
+    }
+}
